@@ -202,6 +202,10 @@ MerEmulatorDevice::MerEmulatorDevice(Core::Id id)
     , m_connection(new MerConnection(0 /* not bug */))
     , m_orientation(Qt::Vertical)
     , m_viewScaled(false)
+    , m_memorySizeMb(0)
+    , m_cpuCount(0)
+    , m_vdiCapacityMb(0)
+    , m_vdiSizeOnDiskMb(0)
 {
 #if __cplusplus >= 201103L
     m_virtualMachineChangedConnection =
@@ -220,6 +224,11 @@ MerEmulatorDevice::MerEmulatorDevice(const MerEmulatorDevice &other):
     , m_availableDeviceModels(other.m_availableDeviceModels)
     , m_orientation(other.m_orientation)
     , m_viewScaled(other.m_viewScaled)
+    , m_memorySizeMb(other.m_memorySizeMb)
+    , m_cpuCount(other.m_cpuCount)
+    , m_vdiPath(other.m_vdiPath)
+    , m_vdiCapacityMb(other.m_vdiCapacityMb)
+    , m_vdiSizeOnDiskMb(other.m_vdiSizeOnDiskMb)
 {
 #if __cplusplus >= 201103L
     m_virtualMachineChangedConnection =
@@ -268,8 +277,8 @@ void MerEmulatorDevice::executeAction(Core::Id actionId, QWidget *parent)
     Q_UNUSED(parent);
     QTC_ASSERT(actionIds().contains(actionId), return);
 
-    // Cancel any unsaved changes to SSH/QmlLive ports or it will blow up
-    MerEmulatorDeviceManager::restorePorts(sharedFromThis().staticCast<MerEmulatorDevice>());
+    // Cancel any unsaved changes to SSH/QmlLive ports, memory size, cpu count and vdi size or it will blow up
+    MerEmulatorDeviceManager::restoreSystemSettings(sharedFromThis().staticCast<MerEmulatorDevice>());
 
     if (actionId ==  Constants::MER_EMULATOR_DEPLOYKEY_ACTION_ID) {
         generateSshKey(QLatin1String(Constants::MER_DEVICE_DEFAULTUSER));
@@ -301,6 +310,11 @@ void MerEmulatorDevice::fromMap(const QVariantMap &map)
     m_orientation = static_cast<Qt::Orientation>(
             map.value(QLatin1String(Constants::MER_DEVICE_ORIENTATION), Qt::Vertical).toInt());
     m_viewScaled = map.value(QLatin1String(Constants::MER_DEVICE_VIEW_SCALED)).toBool();
+    m_memorySizeMb = map.value(QLatin1String(MEMORY_SIZE_MB)).toInt();
+    m_cpuCount = map.value(QLatin1String(CPU_COUNT)).toInt();
+    m_vdiPath = map.value(QLatin1String(VDI_PATH)).toString();
+    m_vdiCapacityMb = map.value(QLatin1String(VDI_CAPACITY_MB)).toInt();
+    m_vdiSizeOnDiskMb = map.value(QLatin1String(VDI_SIZE_MB)).toInt();
 }
 
 QVariantMap MerEmulatorDevice::toMap() const
@@ -314,6 +328,11 @@ QVariantMap MerEmulatorDevice::toMap() const
     map.insert(QLatin1String(Constants::MER_DEVICE_DEVICE_MODEL), m_deviceModel);
     map.insert(QLatin1String(Constants::MER_DEVICE_ORIENTATION), m_orientation);
     map.insert(QLatin1String(Constants::MER_DEVICE_VIEW_SCALED), m_viewScaled);
+    map.insert(QLatin1String(MEMORY_SIZE_MB), memorySizeMb());
+    map.insert(QLatin1String(CPU_COUNT), cpuCount());
+    map.insert(QLatin1String(VDI_PATH), vdiPath());
+    map.insert(QLatin1String(VDI_CAPACITY_MB), vdiCapacityMb());
+    map.insert(QLatin1String(VDI_SIZE_MB), vdiSizeOnDiskMb());
     return map;
 }
 
@@ -340,6 +359,53 @@ void MerEmulatorDevice::setSubnet(const QString& subnet)
 QString MerEmulatorDevice::subnet() const
 {
     return m_subnet;
+}
+
+void MerEmulatorDevice::setMemorySize(int sizeMb)
+{
+    m_memorySizeMb = sizeMb;
+}
+
+int MerEmulatorDevice::memorySizeMb() const
+{
+    return m_memorySizeMb;
+}
+
+void MerEmulatorDevice::setVdiInfo(const QString &vdiPath, int vdiCapacityMb, int vdiSizeOnDiskMb)
+{
+    m_vdiPath = vdiPath;
+    m_vdiCapacityMb = vdiCapacityMb;
+    m_vdiSizeOnDiskMb = vdiSizeOnDiskMb;
+}
+
+void MerEmulatorDevice::setVdiSize(int valueMb)
+{
+    m_vdiCapacityMb = valueMb;
+}
+
+QString MerEmulatorDevice::vdiPath() const
+{
+    return m_vdiPath;
+}
+
+int MerEmulatorDevice::vdiCapacityMb() const
+{
+    return m_vdiCapacityMb;
+}
+
+int MerEmulatorDevice::vdiSizeOnDiskMb() const
+{
+    return m_vdiSizeOnDiskMb;
+}
+
+void MerEmulatorDevice::setCpuCount(int count)
+{
+    m_cpuCount = count;
+}
+
+int MerEmulatorDevice::cpuCount() const
+{
+    return m_cpuCount;
 }
 
 void MerEmulatorDevice::setVirtualMachine(const QString& machineName)
@@ -661,6 +727,12 @@ bool MerEmulatorDeviceManager::isStored(const MerEmulatorDevice::ConstPtr &devic
         return false;
     if (!s_instance->m_deviceQmlLivePortsCache.contains(device->id()))
         return false;
+    if (!s_instance->m_deviceMemorySizeCache.contains(device->id()))
+        return false;
+    if (!s_instance->m_deviceCpuCountCache.contains(device->id()))
+        return false;
+    if (!s_instance->m_vdiSizeCache.contains(device->id()))
+        return false;
 
     return true;
 }
@@ -673,12 +745,19 @@ bool MerEmulatorDeviceManager::isStored(const MerEmulatorDevice::ConstPtr &devic
  * happen to be the same object, so it is no more possible to restore original values by reading
  * properties of the original instance. That's why this function exists.
  */
-bool MerEmulatorDeviceManager::restorePorts(const MerEmulatorDevice::Ptr &device)
+bool MerEmulatorDeviceManager::restoreSystemSettings(const MerEmulatorDevice::Ptr &device)
 {
     Q_ASSERT(device);
 
     if (!isStored(device))
         return false;
+
+    int savedMemory = s_instance->m_deviceMemorySizeCache.value(device->id());
+    device->setMemorySize(savedMemory);
+    int savedCpu = s_instance->m_deviceCpuCountCache.value(device->id());
+    device->setCpuCount(savedCpu);
+    int savedVdiSizeMb = s_instance->m_vdiSizeCache.value(device->id());
+    device->setVdiSize(savedVdiSizeMb);
 
     quint16 savedSshPort = s_instance->m_deviceSshPortCache.value(device->id());
     Utils::PortList savedQmlLivePorts = s_instance->m_deviceQmlLivePortsCache.value(device->id());
@@ -714,6 +793,12 @@ void MerEmulatorDeviceManager::onDeviceAdded(Core::Id id)
     m_deviceSshPortCache.insert(id, merEmulator->sshParameters().port());
     QTC_CHECK(!m_deviceQmlLivePortsCache.contains(id));
     m_deviceQmlLivePortsCache.insert(id, merEmulator->qmlLivePorts());
+    QTC_CHECK(!m_deviceMemorySizeCache.contains(id));
+    m_deviceMemorySizeCache.insert(id, merEmulator->memorySizeMb());
+    QTC_CHECK(!m_deviceCpuCountCache.contains(id));
+    m_deviceCpuCountCache.insert(id, merEmulator->cpuCount());
+    QTC_CHECK(!m_vdiSizeCache.contains(id));
+    m_vdiSizeCache.insert(id, merEmulator->vdiCapacityMb());
 
     emit storedDevicesChanged();
 }
@@ -722,6 +807,9 @@ void MerEmulatorDeviceManager::onDeviceRemoved(Core::Id id)
 {
     m_deviceSshPortCache.remove(id);
     m_deviceQmlLivePortsCache.remove(id);
+    m_deviceMemorySizeCache.remove(id);
+    m_deviceCpuCountCache.remove(id);
+    m_vdiSizeCache.remove(id);
 
     emit storedDevicesChanged();
 }
@@ -732,6 +820,12 @@ void MerEmulatorDeviceManager::onDeviceListReplaced()
     m_deviceSshPortCache.clear();
     const auto oldQmlLivePortsCache = m_deviceQmlLivePortsCache;
     m_deviceQmlLivePortsCache.clear();
+    const auto oldMemorySizeCache = m_deviceMemorySizeCache;
+    m_deviceMemorySizeCache.clear();
+    const auto oldCpuCountCache = m_deviceCpuCountCache;
+    m_deviceCpuCountCache.clear();
+    const auto oldVdiInfoCache = m_vdiSizeCache;
+    m_vdiSizeCache.clear();
 
     const int deviceCount = DeviceManager::instance()->deviceCount();
     for (int i = 0; i < deviceCount; ++i) {
@@ -751,6 +845,24 @@ void MerEmulatorDeviceManager::onDeviceListReplaced()
             MerVirtualBoxManager::updateEmulatorQmlLivePorts(merEmulator->virtualMachine(),
                     merEmulator->qmlLivePortsList());
         m_deviceQmlLivePortsCache.insert(merEmulator->id(), nowQmlLivePorts);
+
+        const int nowMemorySize = merEmulator->memorySizeMb();
+        if (nowMemorySize != oldMemorySizeCache.value(merEmulator->id()))
+            MerVirtualBoxManager::setMemorySizeMb(merEmulator->virtualMachine(), nowMemorySize);
+
+        m_deviceMemorySizeCache.insert(merEmulator->id(), nowMemorySize);
+
+        const int nowCpuCount = merEmulator->cpuCount();
+        if (nowCpuCount != oldCpuCountCache.value(merEmulator->id()))
+            MerVirtualBoxManager::setCpuCount(merEmulator->virtualMachine(), nowCpuCount);
+
+        m_deviceCpuCountCache.insert(merEmulator->id(), nowCpuCount);
+
+        const int nowVdiCapacityMb = merEmulator->vdiCapacityMb();
+        if (nowVdiCapacityMb != oldVdiInfoCache.value(merEmulator->id()))
+            MerVirtualBoxManager::setVdiSizeMb(merEmulator->vdiPath(), nowVdiCapacityMb);
+
+        m_vdiSizeCache.insert(merEmulator->id(), nowVdiCapacityMb);
     }
 
     emit storedDevicesChanged();

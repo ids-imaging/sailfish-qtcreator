@@ -101,6 +101,18 @@ public:
     void setHeadless(bool enabled);
     bool isHeadless() const;
 
+    void setMemorySizeMb(int sizeMb);
+    int memorySizeMb() const;
+
+    void setCpuCount(int count);
+    int cpuCount() const;
+
+    void setVdiInfo(const QString &vdiPath, int vdiCapacityMb, int vdiSizeOnDiskMb);
+    void setVdiSizeMb(int sizeMb);
+    QString vdiPath() const;
+    int vdiCapacityMb() const;
+    int vdiSizeOnDiskMb() const;
+
     QStringList targetNames() const;
     QList<MerTarget> targets() const;
     MerTarget target(const QString &name) const;
@@ -150,6 +162,11 @@ private:
     QList<MerTarget> m_targets;
     QFileSystemWatcher m_watcher;
     QTimer m_updateTargetsTimer;
+    int m_memorySizeMb;
+    int m_cpuCount;
+    QString m_vdiPath;
+    int m_vdiCapacityMb;
+    int m_vdiSizeOnDiskMb;
 
 friend class MerSdkManager;
 };

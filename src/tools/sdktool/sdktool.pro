@@ -3,6 +3,7 @@ include(../../qtcreatortool.pri)
 QT -= concurrent gui widgets testlib
 
 QT += xmlpatterns
+QT += core
 
 isEmpty(PRECOMPILED_HEADER):PRECOMPILED_HEADER = $$PWD/../../shared/qtcreator_pch.h
 
@@ -37,12 +38,15 @@ SOURCES += \
     rmmertargetoperation.cpp \
     addmersdkoperation.cpp \
     ../../plugins/mer/mertargetsxmlparser.cpp \
+    ../../plugins/mer/mervirtualboxmanager.cpp \
+    ../../plugins/mer/merlogging.cpp \
     rmmersdkoperation.cpp \
     $$UTILS/fileutils.cpp \
     $$UTILS/hostosinfo.cpp \
     $$UTILS/persistentsettings.cpp \
     $$UTILS/qtcassert.cpp \
     $$UTILS/savefile.cpp \
+    $$UTILS/port.cpp \
 
 HEADERS += \
     addcmakeoperation.h \
@@ -70,12 +74,16 @@ HEADERS += \
     rmmertargetoperation.h \
     addmersdkoperation.h \
     ../../plugins/mer/mertargetsxmlparser.h \
+    ../../plugins/mer/mervirtualboxmanager.h \
+    ../../plugins/mer/merlogging.h \
+    ../../libs/utils/port.cpp \
     rmmersdkoperation.h \
     $$UTILS/fileutils.h \
     $$UTILS/hostosinfo.h \
     $$UTILS/persistentsettings.h \
     $$UTILS/qtcassert.h \
     $$UTILS/savefile.h \
+    $$UTILS/port.h \
 
 macos {
     OBJECTIVE_SOURCES += \

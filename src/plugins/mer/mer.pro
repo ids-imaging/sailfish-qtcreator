@@ -29,6 +29,7 @@ FORMS += \
     merrunconfigurationaspectqmllivedetailswidget.ui \
     mersdkdetailswidget.ui \
     mersdkselectiondialog.ui \
+    mervirtualmachinesettingswidget.ui \
 
 SOURCES += \
     merabstractvmstartstep.cpp \
@@ -88,6 +89,7 @@ SOURCES += \
     mertoolchain.cpp \
     meruploadandinstallrpmsteps.cpp \
     mervirtualboxmanager.cpp \
+    mervirtualmachinesettingswidget.cpp \
 
 HEADERS += \
     merabstractvmstartstep.h \
@@ -149,6 +151,7 @@ HEADERS += \
     mertoolchainfactory.h \
     meruploadandinstallrpmsteps.h \
     mervirtualboxmanager.h \
+    mervirtualmachinesettingswidget.h \
 
 contains(QT_CONFIG, webkit)|contains(QT_MODULES, webkit) {
     QT += webkit

@@ -34,6 +34,7 @@
 #include "settings.h"
 
 #include "../../plugins/mer/merconstants.h"
+#include "../../plugins/mer/mervirtualboxmanager.h"
 
 #include <iostream>
 
@@ -263,6 +264,13 @@ bool AddDeviceOperation::setArguments(const QStringList &args)
             k = QString::fromStdString(Mer::Constants::MER_DEVICE_SHARED_CONFIG);
         else if (current == QLatin1String("--merDeviceModel"))
             k = QString::fromStdString(Mer::Constants::MER_DEVICE_DEVICE_MODEL);
+        else if (current == QLatin1String("--merVmMemorySize"))
+            k = QString::fromStdString(Mer::Constants::MEMORY_SIZE_MB);
+        else if (current == QLatin1String("--merVmCpuCount"))
+            k = QString::fromStdString(Mer::Constants::CPU_COUNT);
+        else if (current == QLatin1String("--merVmVdiSize"))
+            k = QString::fromStdString(Mer::Constants::VDI_CAPACITY_MB);
+
         KeyValuePair pair(k, next);
         if (!pair.value.isValid())
             return false;
@@ -414,6 +422,23 @@ bool AddDeviceOperation::exists(const QVariantMap &map, const QString &id)
     return false;
 }
 
+void addVirtualMachineParameters(const Operation::KeyValuePairList &extra, Operation::KeyValuePairList *dev)
+{
+    QString virtualMachineName;
+    for (const auto &value : extra) {
+        if (value.key.contains(QString::fromStdString(Mer::Constants::MER_DEVICE_VIRTUAL_MACHINE))){
+            virtualMachineName = value.value.toString();
+            break;
+        }
+    }
+    if (!virtualMachineName.isEmpty()) {
+        Mer::Internal::MerVirtualBoxManager virtualBoxManager;
+        const auto vmInfo = virtualBoxManager.fetchVirtualMachineInfo(virtualMachineName, true);
+        dev->append(Operation::KeyValuePair(QLatin1String(Mer::Constants::VDI_SIZE_MB), QVariant(vmInfo.vdiSizeOnDisk)));
+        dev->append(Operation::KeyValuePair(QLatin1String(Mer::Constants::VDI_PATH), QVariant(vmInfo.vdiPath)));
+    }
+}
+
 Operation::KeyValuePairList AddDeviceOperation::createDevice(const QString &id, const QString &displayName,
                                                              int type, int auth, const QString &hwPlatform,
                                                              const QString &swPlatform, const QString &debugServer,
@@ -445,6 +470,7 @@ Operation::KeyValuePairList AddDeviceOperation::createDevice(const QString &id, 
     dev.append(KeyValuePair(QLatin1String("Version"), QVariant(version)));
 
     dev.append(extra);
+    addVirtualMachineParameters(extra, &dev);
 
     return dev;
 }

@@ -101,6 +101,18 @@ public:
     void setSubnet(const QString& subnet);
     QString subnet() const;
 
+    void setMemorySize(int sizeMb);
+    int memorySizeMb() const;
+
+    void setVdiInfo(const QString &vdiPath, int vdiCapacityMb, int vdiSizeOnDiskMb);
+    void setVdiSize(int value);
+    QString vdiPath() const;
+    int vdiCapacityMb() const;
+    int vdiSizeOnDiskMb() const;
+
+    void setCpuCount(int count);
+    int cpuCount() const;
+
     void generateSshKey(const QString& user) const;
 
     QSsh::SshConnectionParameters sshParametersForUser(const QSsh::SshConnectionParameters &sshParams, const QLatin1String &user) const;
@@ -141,6 +153,11 @@ private:
     Qt::Orientation m_orientation;
     bool m_viewScaled;
     QPointer<QTimer> m_setVideoModeTimer;
+    int m_memorySizeMb;
+    int m_cpuCount;
+    QString m_vdiPath;
+    int m_vdiCapacityMb;
+    int m_vdiSizeOnDiskMb;
 };
 
 class MerEmulatorDeviceManager : public QObject
@@ -153,7 +170,7 @@ public:
     ~MerEmulatorDeviceManager() override;
 
     static bool isStored(const MerEmulatorDevice::ConstPtr &device);
-    static bool restorePorts(const MerEmulatorDevice::Ptr &device);
+    static bool restoreSystemSettings(const MerEmulatorDevice::Ptr &device);
 
 signals:
     void storedDevicesChanged();
@@ -168,6 +185,9 @@ private:
     static MerEmulatorDeviceManager *s_instance;
     QHash<Core::Id, quint16> m_deviceSshPortCache;
     QHash<Core::Id, Utils::PortList> m_deviceQmlLivePortsCache;
+    QHash<Core::Id, int> m_deviceMemorySizeCache;
+    QHash<Core::Id, int> m_deviceCpuCountCache;
+    QHash<Core::Id, int> m_vdiSizeCache;
 };
 
 }

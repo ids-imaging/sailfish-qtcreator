@@ -43,6 +43,7 @@
 #include <QAction>
 #include <QDesktopWidget>
 #include <QPushButton>
+#include <QAction>
 
 using namespace Core;
 using namespace ProjectExplorer;

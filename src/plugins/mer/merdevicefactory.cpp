@@ -30,6 +30,7 @@
 #include "mericons.h"
 #include "mersdkmanager.h"
 #include "mersshkeydeploymentdialog.h"
+#include "mervirtualboxmanager.h"
 
 #include <coreplugin/icore.h>
 #include <ssh/sshconnection.h>
@@ -133,6 +134,9 @@ IDevice::Ptr MerDeviceFactory::create(Core::Id id) const
         device->setSshParameters(sshParams);
         device->setSharedConfigPath(wizard.sharedConfigPath());
         device->setSharedSshPath(wizard.sharedSshPath());
+        device->setMemorySize(wizard.memorySizeMb());
+        device->setCpuCount(wizard.cpuCount());
+        device->setVdiInfo(wizard.vdiPath(), wizard.vdiCapacityMb(), wizard.vdiSizeOnDiskMb());
 
         if(wizard.isUserNewSshKeysRquired() && !wizard.userPrivateKey().isEmpty()) {
             device->generateSshKey(wizard.userName());

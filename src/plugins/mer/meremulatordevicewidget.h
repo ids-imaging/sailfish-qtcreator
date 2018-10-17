@@ -32,6 +32,8 @@ namespace Ui {
 class MerEmulatorDeviceWidget;
 }
 
+class MerVirtualMachineSettingsWidget;
+
 class MerEmulatorDeviceWidget : public ProjectExplorer::IDeviceWidget
 {
     Q_OBJECT
@@ -48,6 +50,9 @@ private slots:
     void handleSshPortChanged();
     void handleFreePortsChanged();
     void handleQmlLivePortsChanged();
+    void handleMemorySizeChanged(int sizeMb);
+    void handleCpuCountChanged(int cpuCount);
+    void handleVdiSizeChanged(int sizeMb);
 
 private:
     void updateDeviceFromUi();
@@ -57,6 +62,7 @@ private:
     void initGui();
 
     Ui::MerEmulatorDeviceWidget *m_ui;
+    MerVirtualMachineSettingsWidget *m_virtualMachineSettingsWidget;
 };
 
 } // Internal

@@ -39,7 +39,10 @@ using namespace ProjectExplorer;
 namespace Mer {
 namespace Internal {
 
+namespace {
+const char MB_SUFFIX[] = "MB";
 
+} // anonymous namespace
 
 QString trimNone(const QString& text)
 {
@@ -128,6 +131,34 @@ QString MerEmualtorVMPage::mac() const
     return m_ui->macLabelEdit->text();
 }
 
+int MerEmualtorVMPage::memorySizeMb() const
+{
+    QString memorySizeMbStr = m_ui->memorySizeLabelEdit->text().remove(MB_SUFFIX);
+    return memorySizeMbStr.toInt();
+}
+
+int MerEmualtorVMPage::cpuCount() const
+{
+    return m_ui->cpuCountLabelEdit->text().toInt();
+}
+
+int MerEmualtorVMPage::vdiCapacityMb() const
+{
+    QString vdiCapacityMbStr = m_ui->vdiCapacityLabelEdit->text().remove(MB_SUFFIX);
+    return vdiCapacityMbStr.toInt();
+}
+
+int MerEmualtorVMPage::vdiSizeOnDiskMb() const
+{
+    QString vdiSizeMbStr = m_ui->vdiSizeLabelEdit->text().remove(MB_SUFFIX);
+    return vdiSizeMbStr.toInt();
+}
+
+QString MerEmualtorVMPage::vdiPath() const
+{
+    return m_ui->vdiPathLabelEdit->text();
+}
+
 void MerEmualtorVMPage::handleEmulatorVmChanged(const QString &vmName)
 {
     int i = 1;
@@ -136,7 +167,7 @@ void MerEmualtorVMPage::handleEmulatorVmChanged(const QString &vmName)
         tryName = vmName + QString::number(++i);
     m_ui->configNameLineEdit->setText(tryName);
 
-    VirtualMachineInfo info = MerVirtualBoxManager::fetchVirtualMachineInfo(vmName);
+    VirtualMachineInfo info = MerVirtualBoxManager::fetchVirtualMachineInfo(vmName, true);
     if (info.sshPort == 0)
         m_ui->sshPortLabelEdit->setText(tr("none"));
     else
@@ -170,6 +201,30 @@ void MerEmualtorVMPage::handleEmulatorVmChanged(const QString &vmName)
     else
         m_ui->macLabelEdit->setText(tr("none"));
 
+    if(info.memorySizeMb > 0)
+        m_ui->memorySizeLabelEdit->setText(QString::number(info.memorySizeMb) + " " + MB_SUFFIX);
+    else
+        m_ui->memorySizeLabelEdit->setText(tr("none"));
+
+    if(info.cpuCount > 0)
+        m_ui->cpuCountLabelEdit->setText(QString::number(info.cpuCount));
+    else
+        m_ui->cpuCountLabelEdit->setText(tr("none"));
+
+    if(info.vdiCapacity > 0)
+        m_ui->vdiCapacityLabelEdit->setText(QString::number(info.vdiCapacity) + " " + MB_SUFFIX);
+    else
+        m_ui->vdiCapacityLabelEdit->setText(tr("none"));
+
+    if(info.vdiSizeOnDisk > 0)
+        m_ui->vdiSizeLabelEdit->setText(QString::number(info.vdiSizeOnDisk) + " " + MB_SUFFIX);
+    else
+        m_ui->vdiSizeLabelEdit->setText(tr("none"));
+
+    if(!info.vdiPath.isEmpty())
+        m_ui->vdiPathLabelEdit->setText(info.vdiPath);
+    else
+        m_ui->vdiPathLabelEdit->setText(tr("none"));
 }
 
 

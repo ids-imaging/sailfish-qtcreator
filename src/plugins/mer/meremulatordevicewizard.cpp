@@ -117,6 +117,31 @@ QString MerEmulatorDeviceWizard::mac() const
     return m_vmPage.mac();
 }
 
+int MerEmulatorDeviceWizard::memorySizeMb() const
+{
+    return m_vmPage.memorySizeMb();
+}
+
+int MerEmulatorDeviceWizard::cpuCount() const
+{
+    return m_vmPage.cpuCount();
+}
+
+int MerEmulatorDeviceWizard::vdiCapacityMb() const
+{
+    return m_vmPage.vdiCapacityMb();
+}
+
+int MerEmulatorDeviceWizard::vdiSizeOnDiskMb() const
+{
+    return m_vmPage.vdiSizeOnDiskMb();
+}
+
+QString MerEmulatorDeviceWizard::vdiPath() const
+{
+    return m_vmPage.vdiPath();
+}
+
 }
 }
 

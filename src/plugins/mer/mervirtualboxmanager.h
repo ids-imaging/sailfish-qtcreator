@@ -37,10 +37,12 @@ namespace Utils {
 namespace Mer {
 namespace Internal {
 
+class MerConnection;
+
 class VirtualMachineInfo
 {
 public:
-    VirtualMachineInfo() : sshPort(0), wwwPort(0), headless(false) {}
+    VirtualMachineInfo() : sshPort(0), wwwPort(0), headless(false), memorySizeMb(0), cpuCount(0), vdiCapacity(0), vdiSizeOnDisk(0) {}
     QString sharedHome;
     QString sharedTargets;
     QString sharedConfig;
@@ -52,6 +54,11 @@ public:
     QList<quint16> qmlLivePorts;
     QStringList macs;
     bool headless;
+    int memorySizeMb;
+    int cpuCount;
+    QString vdiPath;
+    int vdiCapacity;
+    int vdiSizeOnDisk;
 };
 
 class MerVirtualBoxManager : public QObject
@@ -64,7 +71,7 @@ public:
     static void isVirtualMachineRunning(const QString &vmName, QObject *context,
                                         std::function<void(bool,bool)> slot);
     static QStringList fetchRegisteredVirtualMachines();
-    static VirtualMachineInfo fetchVirtualMachineInfo(const QString &vmName);
+    static VirtualMachineInfo fetchVirtualMachineInfo(const QString &vmName, bool fetchVdiInfo = false);
     static void startVirtualMachine(const QString &vmName, bool headless);
     static void shutVirtualMachine(const QString &vmName);
     static bool updateSharedFolder(const QString &vmName, const QString &mountName, const QString &newFolder);
@@ -73,7 +80,15 @@ public:
     static bool updateEmulatorSshPort(const QString &vmName, quint16 port);
     static bool updateEmulatorQmlLivePorts(const QString &vmName, const QList<Utils::Port> &ports);
     static void setVideoMode(const QString &vmName, const QSize &size, int depth);
+    static bool setVdiSizeMb(const QString &path, int sizeMb);
+    static bool setMemorySizeMb(const QString &vmName, int sizeMb);
+    static bool setCpuCount(const QString &vmName, int count);
+
     static QString getExtraData(const QString &vmName, const QString &key);
+
+    static void getHostTotalMemorySizeMb(QObject *context, std::function<void(int)> slot);
+    static int getHostTotalCpuCount();
+    static int getHostAvailableStorageMb(const QString& path);
 
 private:
     static MerVirtualBoxManager *m_instance;
