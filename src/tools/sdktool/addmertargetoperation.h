@@ -52,7 +52,8 @@ public:
 
     static QVariantMap initializeTargets();
     static QVariantMap addTarget(const QVariantMap &map, const QString &name, const QString &qmakeFileName,
-    const QString &gccFileName);
+            const QString &gccDumpMachineFileName, const QString &gccDumpMacrosFileName,
+            const QString &gccDumpIncludesFileName);
     static QVariantMap load(const QString &root);
     static bool save(const QVariantMap &map, const QString &root);
 private:   
@@ -64,6 +65,8 @@ private:
     QString m_targetName;
     QString m_qmakeQueryFileName;
     QString m_gccDumpmachineFileName;
+    QString m_gccDumpmacrosFileName;
+    QString m_gccDumpincludesFileName;
 };
 
 #endif // ADDMERTARGETOPERATION_H

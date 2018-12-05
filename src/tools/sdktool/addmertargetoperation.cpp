@@ -42,6 +42,8 @@ const char MER_PARAM_MER_TARGETS_DIR[] = "--mer-targets-dir";
 const char MER_PARAM_TARGET_NAME[] = "--target-name";
 const char MER_PARAM_QMAKE_QUERY[] = "--qmake-query";
 const char MER_PARAM_GCC_DUMPMACHINE[] = "--gcc-dumpmachine";
+const char MER_PARAM_GCC_DUMPMACROS[] = "--gcc-dumpmacros";
+const char MER_PARAM_GCC_DUMPINCLUDES[] = "--gcc-dumpincludes";
 
 AddMerTargetOperation::AddMerTargetOperation()
 {
@@ -63,7 +65,9 @@ QString AddMerTargetOperation::argumentsHelpText() const
     return indent + QLatin1String(MER_PARAM_MER_TARGETS_DIR) + QLatin1String(" <PATH>   shared \"targets\" folder (required).\n")
          + indent + QLatin1String(MER_PARAM_TARGET_NAME) + QLatin1String(" <NAME>       display name (required).\n")
          + indent + QLatin1String(MER_PARAM_QMAKE_QUERY) + QLatin1String(" <FILE>       'qmake -query' dump (required).\n")
-         + indent + QLatin1String(MER_PARAM_GCC_DUMPMACHINE) + QLatin1String(" <FILE>   'gcc --dumpmachine' dump (required).\n");
+         + indent + QLatin1String(MER_PARAM_GCC_DUMPMACHINE) + QLatin1String(" <FILE>   'gcc --dumpmachine' dump (required).\n")
+         + indent + QLatin1String(MER_PARAM_GCC_DUMPMACROS) + QLatin1String(" <FILE>   'gcc -x c++ -E -dM -D_REENTRANT -fPIC -' dump (required).\n")
+         + indent + QLatin1String(MER_PARAM_GCC_DUMPINCLUDES) + QLatin1String(" <FILE>   'gcc -x c++ -E -v -' dump (required).\n");
 }
 
 bool AddMerTargetOperation::setArguments(const QStringList &args)
@@ -104,6 +108,22 @@ bool AddMerTargetOperation::setArguments(const QStringList &args)
             m_gccDumpmachineFileName = next;
             continue;
         }
+
+        if (current == QLatin1String(MER_PARAM_GCC_DUMPMACROS)) {
+            if (next.isNull())
+                return false;
+            ++i; // skip next;
+            m_gccDumpmacrosFileName = next;
+            continue;
+        }
+
+        if (current == QLatin1String(MER_PARAM_GCC_DUMPINCLUDES)) {
+            if (next.isNull())
+                return false;
+            ++i; // skip next;
+            m_gccDumpincludesFileName = next;
+            continue;
+        }
     }
 
     const char MISSING[] = " parameter missing.";
@@ -115,8 +135,13 @@ bool AddMerTargetOperation::setArguments(const QStringList &args)
         std::cerr << MER_PARAM_QMAKE_QUERY << MISSING << std::endl << std::endl;
     if (m_gccDumpmachineFileName.isEmpty())
         std::cerr << MER_PARAM_GCC_DUMPMACHINE << MISSING << std::endl << std::endl;
+    if (m_gccDumpmacrosFileName.isEmpty())
+        std::cerr << MER_PARAM_GCC_DUMPMACROS << MISSING << std::endl << std::endl;
+    if (m_gccDumpincludesFileName.isEmpty())
+        std::cerr << MER_PARAM_GCC_DUMPINCLUDES << MISSING << std::endl << std::endl;
 
-    return !m_targetsDir.isEmpty() && !m_targetName.isEmpty() && !m_qmakeQueryFileName.isEmpty() && !m_gccDumpmachineFileName.isEmpty();
+    return !m_targetsDir.isEmpty() && !m_targetName.isEmpty() && !m_qmakeQueryFileName.isEmpty() && !m_gccDumpmachineFileName.isEmpty()
+        && !m_gccDumpmacrosFileName.isEmpty() && !m_gccDumpincludesFileName.isEmpty();
 }
 
 int AddMerTargetOperation::execute() const
@@ -125,7 +150,8 @@ int AddMerTargetOperation::execute() const
     if (map.isEmpty())
         map = initializeTargets();
 
-    const QVariantMap result = addTarget(map, m_targetName, m_qmakeQueryFileName, m_gccDumpmachineFileName);
+    const QVariantMap result = addTarget(map, m_targetName, m_qmakeQueryFileName, m_gccDumpmachineFileName,
+            m_gccDumpmacrosFileName,m_gccDumpincludesFileName);
 
     if (result.isEmpty() || map == result)
         return 2;
@@ -136,7 +162,7 @@ int AddMerTargetOperation::execute() const
 QVariantMap AddMerTargetOperation::initializeTargets()
 {
     QVariantMap map;
-    map.insert(QLatin1String(Mer::Constants::MER_TARGET_FILE_VERSION_KEY), 2);
+    map.insert(QLatin1String(Mer::Constants::MER_TARGET_FILE_VERSION_KEY), 3);
     return map;
 }
 
@@ -158,7 +184,8 @@ QString AddMerTargetOperation::readCacheFile(const QString &cacheFile)
 }
 
 QVariantMap AddMerTargetOperation::addTarget(const QVariantMap &map, const QString &name, const QString &qmakeFileName,
-                                             const QString &gccFileName)
+                                             const QString &gccDumpMachineFileName, const QString &gccDumpMacrosFileName,
+                                             const QString &gccDumpIncludesFileName)
 {
     bool hasTarget = false;
     QVariantList targetData = map.value(QLatin1String(Mer::Constants::MER_TARGET_KEY)).toList();
@@ -190,12 +217,26 @@ QVariantMap AddMerTargetOperation::addTarget(const QVariantMap &map, const QStri
     }
     newTarget.qmakeQuery = qmake;
 
-    const QString gcc = readCacheFile(gccFileName);
-    if (gcc.isEmpty()) {
-        std::cerr << "Error: Could not read file " << qPrintable(gccFileName) << std::endl;
+    const QString gccDumpMachine = readCacheFile(gccDumpMachineFileName);
+    if (gccDumpMachine.isEmpty()) {
+        std::cerr << "Error: Could not read file " << qPrintable(gccDumpMachineFileName) << std::endl;
         return QVariantMap();
     }
-    newTarget.gccDumpMachine = gcc;
+    newTarget.gccDumpMachine = gccDumpMachine;
+
+    const QString gccDumpMacros = readCacheFile(gccDumpMacrosFileName);
+    if (gccDumpMacros.isEmpty()) {
+        std::cerr << "Error: Could not read file " << qPrintable(gccDumpMacrosFileName) << std::endl;
+        return QVariantMap();
+    }
+    newTarget.gccDumpMacros = gccDumpMacros;
+
+    const QString gccDumpIncludes = readCacheFile(gccDumpIncludesFileName);
+    if (gccDumpIncludes.isEmpty()) {
+        std::cerr << "Error: Could not read file " << qPrintable(gccDumpIncludesFileName) << std::endl;
+        return QVariantMap();
+    }
+    newTarget.gccDumpIncludes = gccDumpIncludes;
 
     QVariantMap newMap = map;
     targetData.append(QVariant::fromValue(newTarget));

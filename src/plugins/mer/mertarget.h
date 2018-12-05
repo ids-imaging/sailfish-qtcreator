@@ -53,6 +53,8 @@ public:
     void setName(const QString &name);
     void setQmakeQuery(const QString &qmakeQuery);
     void setGccDumpMachine(const QString &gccMachineDump);
+    void setGccDumpMacros(const QString &gccMacrosDump);
+    void setGccDumpIncludes(const QString &gccIncludesDump);
     void setDefaultGdb(const QString &name);
 
     bool fromMap(const QVariantMap &data);
@@ -75,6 +77,8 @@ private:
     QString m_name;
     QString m_qmakeQuery;
     QString m_gccMachineDump;
+    QString m_gccMacrosDump;
+    QString m_gccIncludesDump;
     QString m_defaultGdb;
 };
 

@@ -157,17 +157,17 @@ QList<Task> MerToolChain::validateKit(const Kit *kit) const
     return result;
 }
 
-QList<HeaderPath> MerToolChain::systemHeaderPaths(const QStringList &cxxflags, const FileName &sysRoot) const
-{
-    Q_UNUSED(cxxflags)
-    if (m_headerPathsOnHost.isEmpty()) {
-        m_headerPathsOnHost.append(HeaderPath(sysRoot.toString() + QLatin1String("/usr/local/include"),
-                                             HeaderPath::GlobalHeaderPath));
-        m_headerPathsOnHost.append(HeaderPath(sysRoot.toString() + QLatin1String("/usr/include"),
-                                             HeaderPath::GlobalHeaderPath));
-    }
-    return m_headerPathsOnHost;
-}
+//QList<HeaderPath> MerToolChain::systemHeaderPaths(const QStringList &cxxflags, const FileName &sysRoot) const
+//{
+//    Q_UNUSED(cxxflags)
+//    if (m_headerPathsOnHost.isEmpty()) {
+//        m_headerPathsOnHost.append(HeaderPath(sysRoot.toString() + QLatin1String("/usr/local/include"),
+//                                             HeaderPath::GlobalHeaderPath));
+//        m_headerPathsOnHost.append(HeaderPath(sysRoot.toString() + QLatin1String("/usr/include"),
+//                                             HeaderPath::GlobalHeaderPath));
+//    }
+//    return m_headerPathsOnHost;
+//}
 
 
 void MerToolChain::addToEnvironment(Environment &env) const

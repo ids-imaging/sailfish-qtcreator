@@ -419,6 +419,8 @@ QList<MerTarget> MerSdk::readTargets(const FileName &fileName)
             MerTarget target(this);
             target.setName(data.name);
             target.setGccDumpMachine(data.gccDumpMachine);
+            target.setGccDumpMacros(data.gccDumpMacros);
+            target.setGccDumpIncludes(data.gccDumpIncludes);
             target.setQmakeQuery(data.qmakeQuery);
 
             if (data.gccDumpMachine.contains(QLatin1String(Constants::MER_i486_IDENTIFIER))) {
