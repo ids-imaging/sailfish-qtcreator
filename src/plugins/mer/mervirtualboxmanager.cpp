@@ -92,7 +92,7 @@ const char TOTAL_RAM[] = "RAM/Usage/Total";
 namespace Mer {
 namespace Internal {
 
-static VirtualMachineInfo virtualMachineInfoFromOutput(const QString &output, bool fillVdiInfo);
+static VirtualMachineInfo virtualMachineInfoFromOutput(const QString &output);
 static void fetchVdiInfo(VirtualMachineInfo *virtualMachineInfo);
 static void vdiInfoFromOutput(const QString &output, VirtualMachineInfo *virtualMachineInfo);
 static int ramSizeFromOutput(const QString &output);
@@ -440,7 +440,8 @@ bool MerVirtualBoxManager::updateEmulatorSshPort(const QString &vmName, quint16 
     return true;
 }
 
-VirtualMachineInfo MerVirtualBoxManager::fetchVirtualMachineInfo(const QString &vmName, bool fetchVdiInfo)
+VirtualMachineInfo MerVirtualBoxManager::fetchVirtualMachineInfo(const QString &vmName,
+        ExtraInfos extraInfo)
 {
     VirtualMachineInfo info;
     QStringList arguments;
@@ -451,7 +452,12 @@ VirtualMachineInfo MerVirtualBoxManager::fetchVirtualMachineInfo(const QString &
     if (!process.runSynchronously(arguments))
         return info;
 
-    return virtualMachineInfoFromOutput(QString::fromLocal8Bit(process.readAllStandardOutput()), fetchVdiInfo);
+    info = virtualMachineInfoFromOutput(QString::fromLocal8Bit(process.readAllStandardOutput()));
+
+    if (extraInfo & VdiInfo)
+        fetchVdiInfo(&info);
+
+    return info;
 }
 
 // It is an error to call this function when the VM vmName is running
@@ -702,7 +708,7 @@ QStringList listedVirtualMachines(const QString &output)
     return vms;
 }
 
-VirtualMachineInfo virtualMachineInfoFromOutput(const QString &output, bool fillVdiInfo)
+VirtualMachineInfo virtualMachineInfoFromOutput(const QString &output)
 {
     VirtualMachineInfo info;
     info.sshPort = 0;
@@ -762,11 +768,10 @@ VirtualMachineInfo virtualMachineInfoFromOutput(const QString &output, bool fill
             }
         } else if (rexp.cap(0).startsWith(QLatin1String("Session"))) {
             info.headless = rexp.cap(11) == QLatin1String("headless");
-        } else if (rexp.cap(0).startsWith(QLatin1String("\"SATA")) && fillVdiInfo) {
+        } else if (rexp.cap(0).startsWith(QLatin1String("\"SATA"))) {
             QString vdiPath = rexp.cap(14);
             if (!vdiPath.isEmpty() && vdiPath != QLatin1String("none")) {
                 info.vdiPath = vdiPath;
-                fetchVdiInfo(&info);
             }
         } else if (rexp.cap(0).startsWith(QLatin1String("memory"))) {
             int memorySize = rexp.cap(15).toInt();

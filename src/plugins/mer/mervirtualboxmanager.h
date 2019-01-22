@@ -42,36 +42,44 @@ class MerConnection;
 class VirtualMachineInfo
 {
 public:
-    VirtualMachineInfo() : sshPort(0), wwwPort(0), headless(false), memorySizeMb(0), cpuCount(0), vdiCapacity(0), vdiSizeOnDisk(0) {}
     QString sharedHome;
     QString sharedTargets;
     QString sharedConfig;
     QString sharedSrc;
     QString sharedSsh;
-    quint16 sshPort;
-    quint16 wwwPort;
+    quint16 sshPort{0};
+    quint16 wwwPort{0};
     QList<quint16> freePorts;
     QList<quint16> qmlLivePorts;
     QStringList macs;
-    bool headless;
-    int memorySizeMb;
-    int cpuCount;
+    bool headless{false};
+    int memorySizeMb{0};
+    int cpuCount{0};
     QString vdiPath;
-    int vdiCapacity;
-    int vdiSizeOnDisk;
+
+    // VdiInfo
+    int vdiCapacity{0};
+    int vdiSizeOnDisk{0};
 };
 
 class MerVirtualBoxManager : public QObject
 {
     Q_OBJECT
 public:
+    enum ExtraInfo {
+        NoExtraInfo = 0x00,
+        VdiInfo = 0x01,
+    };
+    Q_DECLARE_FLAGS(ExtraInfos, ExtraInfo)
+
     MerVirtualBoxManager(QObject *parent = 0);
     static MerVirtualBoxManager* instance();
     ~MerVirtualBoxManager() override;
     static void isVirtualMachineRunning(const QString &vmName, QObject *context,
                                         std::function<void(bool,bool)> slot);
     static QStringList fetchRegisteredVirtualMachines();
-    static VirtualMachineInfo fetchVirtualMachineInfo(const QString &vmName, bool fetchVdiInfo = false);
+    static VirtualMachineInfo fetchVirtualMachineInfo(const QString &vmName,
+            ExtraInfos extraInfo = NoExtraInfo);
     static void startVirtualMachine(const QString &vmName, bool headless);
     static void shutVirtualMachine(const QString &vmName);
     static bool updateSharedFolder(const QString &vmName, const QString &mountName, const QString &newFolder);
@@ -93,6 +101,8 @@ public:
 private:
     static MerVirtualBoxManager *m_instance;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(MerVirtualBoxManager::ExtraInfos)
 
 } // Internal
 } // Mer

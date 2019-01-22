@@ -350,7 +350,8 @@ void addVirtualMachineParameters(Operation::KeyValuePairList *data, const QStrin
 {
     if (!virtualMachineName.isEmpty()) {
         Mer::Internal::MerVirtualBoxManager virtualBoxManager;
-        const auto info = virtualBoxManager.fetchVirtualMachineInfo(virtualMachineName, true);
+        const auto info = virtualBoxManager.fetchVirtualMachineInfo(virtualMachineName,
+                Mer::Internal::MerVirtualBoxManager::VdiInfo);
         *data << Operation::KeyValuePair(QStringList() << sdk << QLatin1String(Mer::Constants::VDI_SIZE_MB), QVariant(info.vdiSizeOnDisk));
         *data << Operation::KeyValuePair(QStringList() << sdk << QLatin1String(Mer::Constants::VDI_PATH), QVariant(info.vdiPath));
     }
