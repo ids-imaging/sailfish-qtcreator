@@ -95,6 +95,9 @@ public:
     void setVirtualMachine(const QString& machineName);
     QString virtualMachine() const;
 
+    void setFactorySnapshot(const QString &snapshotName);
+    QString factorySnapshot() const;
+
     void setMac(const QString& mac);
     QString mac() const;
 
@@ -134,6 +137,8 @@ private:
     friend class MerEmulatorDeviceManager;
     void updateConnection() const;
 
+    void doFactoryReset(QWidget *parent);
+
     void updateAvailableDeviceModels();
     void scheduleSetVideoMode();
     void setVideoMode();
@@ -145,6 +150,7 @@ private:
 #if __cplusplus >= 201103L
     QMetaObject::Connection m_virtualMachineChangedConnection;
 #endif
+    QString m_factorySnapshot;
     QString m_mac;
     QString m_subnet;
     QString m_sharedConfigPath;
