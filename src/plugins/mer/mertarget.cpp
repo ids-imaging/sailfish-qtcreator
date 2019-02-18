@@ -253,6 +253,39 @@ void MerTarget::ensureDebuggerIsSet(Kit *k) const
     }
 }
 
+void MerTarget::ensureToolChainIsSet(Kit *k) const
+{
+    if (ToolChainKitInformation::toolChains(k).count() > 0) {
+        return;
+    }
+
+    if (!createScripts()) {
+        qWarning() << "Failed to create wrapper scripts.";
+        return;
+    }
+
+    QScopedPointer<MerToolChain> toolchain(createToolChain(ProjectExplorer::Constants::CXX_LANGUAGE_ID));
+    if (toolchain.isNull())
+        return;
+    QScopedPointer<MerToolChain> toolchain_c(createToolChain(ProjectExplorer::Constants::C_LANGUAGE_ID));
+    if (toolchain_c.isNull())
+        return;
+    QScopedPointer<MerQtVersion> version(createQtVersion());
+    if (version.isNull())
+        return;
+
+    ToolChainManager::registerToolChain(toolchain.data());
+    ToolChainManager::registerToolChain(toolchain_c.data());
+    QtVersionManager::addVersion(version.data());
+    QtKitInformation::setQtVersion(k, version.data());
+    ToolChainKitInformation::setToolChain(k, toolchain.data());
+    ToolChainKitInformation::setToolChain(k, toolchain_c.data());
+    toolchain.take();
+    toolchain_c.take();
+    version.take();
+    return;
+}
+
 MerQtVersion* MerTarget::createQtVersion() const
 {
     const FileName qmake = FileName::fromString(targetPath() + QLatin1Char('/') +

@@ -74,6 +74,7 @@ public:
     QVariantMap toMap() const;
     ProjectExplorer::Kit* createKit() const;
     void ensureDebuggerIsSet(ProjectExplorer::Kit *k) const;
+    void ensureToolChainIsSet(ProjectExplorer::Kit *k) const;
     MerQtVersion* createQtVersion() const;
     MerToolChain* createToolChain(Core::Id l) const;
     bool createScripts() const;

@@ -150,6 +150,7 @@ void MerSdkManager::initialize()
             foreach (const MerTarget &target, sdk->targets()) {
                 foreach (Kit *kit, kitsForTarget(target.name())) {
                     target.ensureDebuggerIsSet(kit);
+                    target.ensureToolChainIsSet(kit);
                 }
             }
         }
